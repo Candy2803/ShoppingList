@@ -15,8 +15,6 @@
     "react-native": "0.79.2",
     "expo-router": "4.0.17",
     "@expo-google-fonts/poppins": "^0.2.3",
-    "@supabase/supabase-js": "^2.39.3",
-    "expo-secure-store": "~12.8.1",
     "lucide-react-native": "^0.323.0",
     "react-native-reanimated": "~3.6.2",
     "react-native-gesture-handler": "~2.14.0",

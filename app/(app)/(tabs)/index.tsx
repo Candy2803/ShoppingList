@@ -1,116 +1,63 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
 import { Trash2, Plus } from 'lucide-react-native';
-import { supabase } from '@/lib/supabase';
 
 interface ShoppingItem {
   id: string;
   name: string;
-  is_checked: boolean;
-  user_id: string;
+  isChecked: boolean;
 }
 
 export default function ShoppingList() {
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [newItem, setNewItem] = useState('');
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchItems();
+    loadItems();
   }, []);
 
-  const fetchItems = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('shopping_items')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setItems(data || []);
-    } catch (error) {
-      console.error('Error fetching items:', error);
-    } finally {
-      setLoading(false);
+  const loadItems = () => {
+    const savedItems = localStorage.getItem('shoppingItems');
+    if (savedItems) {
+      setItems(JSON.parse(savedItems));
     }
   };
 
-  const addItem = async () => {
+  const saveItems = (newItems: ShoppingItem[]) => {
+    localStorage.setItem('shoppingItems', JSON.stringify(newItems));
+    setItems(newItems);
+  };
+
+  const addItem = () => {
     if (!newItem.trim()) return;
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('shopping_items')
-        .insert([
-          { name: newItem.trim(), user_id: user.id }
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-      
-      setItems([data, ...items]);
-      setNewItem('');
-    } catch (error) {
-      console.error('Error adding item:', error);
-    }
+    const newItems = [
+      {
+        id: Date.now().toString(),
+        name: newItem.trim(),
+        isChecked: false
+      },
+      ...items
+    ];
+    
+    saveItems(newItems);
+    setNewItem('');
   };
 
-  const toggleItem = async (id: string, currentStatus: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('shopping_items')
-        .update({ is_checked: !currentStatus })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setItems(items.map(item => 
-        item.id === id ? { ...item, is_checked: !currentStatus } : item
-      ));
-    } catch (error) {
-      console.error('Error toggling item:', error);
-    }
+  const toggleItem = (id: string) => {
+    const newItems = items.map(item => 
+      item.id === id ? { ...item, isChecked: !item.isChecked } : item
+    );
+    saveItems(newItems);
   };
 
-  const deleteItem = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('shopping_items')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setItems(items.filter(item => item.id !== id));
-    } catch (error) {
-      console.error('Error deleting item:', error);
-    }
+  const deleteItem = (id: string) => {
+    const newItems = items.filter(item => item.id !== id);
+    saveItems(newItems);
   };
 
-  const clearList = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from('shopping_items')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      setItems([]);
-    } catch (error) {
-      console.error('Error clearing list:', error);
-    }
+  const clearList = () => {
+    saveItems([]);
   };
 
   return (
@@ -143,16 +90,16 @@ export default function ShoppingList() {
           <TouchableOpacity
             style={[
               styles.item,
-              { backgroundColor: item.is_checked ? '#e8f5e9' : '#ffffff' }
+              { backgroundColor: item.isChecked ? '#e8f5e9' : '#ffffff' }
             ]}
-            onPress={() => toggleItem(item.id, item.is_checked)}
+            onPress={() => toggleItem(item.id)}
           >
             <Text
               style={[
                 styles.itemText,
                 {
-                  color: item.is_checked ? '#2e7d32' : '#1a1a1a',
-                  textDecorationLine: item.is_checked ? 'line-through' : 'none',
+                  color: item.isChecked ? '#2e7d32' : '#1a1a1a',
+                  textDecorationLine: item.isChecked ? 'line-through' : 'none',
                 }
               ]}
             >

@@ -1,13 +1,12 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { supabase } from '@/lib/supabase';
 import { LogOut } from 'lucide-react-native';
 
 export default function Profile() {
   const router = useRouter();
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    localStorage.clear();
     router.replace('/login');
   };
 

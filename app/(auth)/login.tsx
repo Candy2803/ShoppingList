@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { supabase } from '@/lib/supabase';
 
 export default function Login() {
   const router = useRouter();
@@ -10,17 +9,18 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async () => {
+  const handleLogin = () => {
     try {
       setLoading(true);
       setError(null);
       
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Simple validation
+      if (!email || !password) {
+        throw new Error('Please fill in all fields');
+      }
 
-      if (error) throw error;
+      // Store user session
+      localStorage.setItem('userEmail', email);
       
       router.replace('/(app)/(tabs)');
     } catch (err: any) {
